@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>몬스터를 잡아라: 노을 협곡 아레나</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1a0818;
+            color: #f3f4f6;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 10, 20, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.5);
+            border-radius: 3px;
+        }
+        .glow-title {
+            text-shadow: 0 0 25px rgba(245, 158, 11, 0.8), 0 0 50px rgba(239, 68, 68, 0.6);
+        }
+        .glow-card {
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
+        }
+        .glow-btn-red {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .glow-btn-blue {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+        #gameCanvas {
+            background: linear-gradient(to bottom, #1d0c27 0%, #4c1a2d 45%, #943729 80%, #30101b 100%);
+        }
+        .touch-action-none {
+            touch-action: none;
+        }
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.85; }
+        }
+        .danger-pulse {
+            animation: pulse-danger 0.6s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="relative w-full h-full overflow-hidden bg-slate-950">
+    <div id="uiOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-slate-950/90 via-amber-950/80 to-red-950/90 backdrop-blur-md overflow-y-auto">
+
+        <!-- MAIN MENU PANEL -->
+        <div id="mainMenu" class="max-w-2xl w-full flex flex-col items-center text-center space-y-5 transition-all duration-300 py-4">
+            <div class="relative">
+                <span class="text-xs uppercase tracking-widest font-orbitron text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full bg-amber-500/10 shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-mountain-sun mr-1"></i> Sunset Canyon Arena
+                </span>
+                <h1 class="text-4xl md:text-6xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-500 to-red-500 mt-2 glow-title">
+                    몬스터를 잡아라
+                </h1>
+                <p class="text-amber-200/80 text-xs md:text-sm mt-1 font-medium">5개의 끔찍한 보스 웨이브를 돌파하고 아레나를 정복하세요!</p>
+            </div>
+
+            <!-- CLASS SELECTOR -->
+            <div class="w-full bg-slate-900/80 border border-amber-900/40 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-xs font-semibold text-amber-300 mb-3 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-amber-400"></i> 클래스 선택
+                </h3>
+                <div class="grid grid-cols-3 gap-2 md:gap-3">
+                    <button onclick="selectClass('knight')" id="classBtn-knight" class="class-card bg-amber-500/20 border-2 border-amber-500 rounded-xl p-2.5 flex flex-col items-center transition-all hover:scale-105">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl mb-1">
+                            <i class="fa-solid fa-shield-cat"></i>
+                        </div>
+                        <span class="font-bold text-xs text-amber-300">성기사</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">높은 체력 & 근접 슬래시</span>
+                    </button>
+
+                    <button onclick="selectClass('mage')" id="classBtn-mage" class="class-card bg-slate-800/50 border-2 border-transparent rounded-xl p-2.5 flex flex-col items-center transition-all hover:scale-105">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl mb-1">
+                            <i class="fa-solid fa-hat-wizard"></i>
+                        </div>
+                        <span class="font-bold text-xs text-blue-300">마법사</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">강력한 광역 원거리 스펠</span>
+                    </button>
+
+                    <button onclick="selectClass('ranger')" id="classBtn-ranger" class="class-card bg-slate-800/50 border-2 border-transparent rounded-xl p-2.5 flex flex-col items-center transition-all hover:scale-105">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-1">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </div>
+                        <span class="font-bold text-xs text-emerald-300">레인저</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">빠른 이동 & 원거리 사격</span>
+                    </button>
+                </div>
+
+                <!-- WEAPON SELECTOR -->
+                <div class="mt-3 pt-3 border-t border-slate-800/80">
+                    <h4 class="text-xs font-semibold text-amber-300/90 mb-2 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-gun text-amber-400"></i> 무기 선택
+                    </h4>
+                    <div id="weaponSelectorContainer" class="grid grid-cols-3 gap-2">
+                        <!-- Weapon options generated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODE SELECT BUTTONS -->
+            <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <button onclick="startSoloGame()" class="group relative overflow-hidden bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold p-4 rounded-2xl glow-btn-red flex flex-col items-center justify-center transition-all duration-200 active:scale-95">
+                    <div class="flex items-center gap-2 text-lg font-orbitron">
+                        <i class="fa-solid fa-user text-xl"></i> 솔로 플레이
+                    </div>
+                    <p class="text-[11px] text-red-100/80 mt-0.5">5대 보스 웨이브 도전 모드</p>
+                </button>
+
+                <button onclick="openMultiplayLobby()" class="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold p-4 rounded-2xl glow-btn-blue flex flex-col items-center justify-center transition-all duration-200 active:scale-95">
+                    <div class="flex items-center gap-2 text-lg font-orbitron">
+                        <i class="fa-solid fa-users text-xl"></i> 멀티 플레이
+                    </div>
+                    <p class="text-[11px] text-blue-100/80 mt-0.5">친구들과 방을 만들고 협동 토벌</p>
+                </button>
+            </div>
+
+            <div class="text-[11px] text-slate-400 bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-xl flex flex-wrap items-center justify-center gap-3">
+                <span><i class="fa-solid fa-gamepad text-amber-400 mr-1"></i> 이동: 조이스틱 또는 키보드 [WASD]</span>
+                <span><i class="fa-solid fa-keyboard text-amber-400 mr-1"></i> 공격 [J], 대시 [K], 특수스킬 [L]</span>
+            </div>
+        </div>
+
+        <!-- MULTIPLAY LOBBY MODAL -->
+        <div id="multiLobby" class="hidden max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-xl font-bold font-orbitron text-indigo-400 flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i> 멀티플레이 로비
+                </h2>
+                <button onclick="closeMultiplayLobby()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="lobbyInputArea" class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">플레이어 닉네임</label>
+                    <input type="text" id="playerNameInput" value="헌터-01" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500 font-semibold" placeholder="닉네임 입력">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="createMultiRoom()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition flex flex-col items-center justify-center text-sm">
+                        <i class="fa-solid fa-plus-circle text-lg mb-1"></i> 방 만들기
+                    </button>
+                    <div class="flex flex-col space-y-1">
+                        <input type="text" id="roomCodeInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-center text-sm font-mono uppercase tracking-wider text-amber-400 focus:outline-none focus:border-indigo-500" placeholder="방 코드 (4자리)">
+                        <button onclick="joinMultiRoom()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs transition">
+                            방 참가
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="roomWaitingArea" class="hidden space-y-4">
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-indigo-500/30 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-slate-400 block">방 코드</span>
+                        <span id="displayRoomCode" class="text-2xl font-mono font-black text-amber-400 tracking-widest">----</span>
+                    </div>
+                    <button onclick="copyRoomCode()" class="bg-indigo-900/50 hover:bg-indigo-800 text-indigo-300 border border-indigo-500/50 text-xs px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-copy mr-1"></i> 코드 복사
+                    </button>
+                </div>
+
+                <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                    <h4 class="text-xs font-semibold text-amber-300/90 mb-2 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-shirt text-amber-400"></i> 의상 색상 선택
+                    </h4>
+                    <div id="armorColorContainer" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">참가자 목록 (<span id="playerCount">1</span>/4)</h4>
+                    <div id="playerListContainer" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button onclick="leaveRoom()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-sm transition">
+                        나가기
+                    </button>
+                    <button id="startMultiGameBtn" onclick="startMultiGame()" class="w-2/3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg glow-btn-blue">
+                        게임 시작
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameContainer" class="relative w-full h-full overflow-hidden select-none">
+        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+
+        <div id="hudOverlay" class="hidden absolute inset-0 pointer-events-none p-3 md:p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-start w-full gap-2">
+                <div class="bg-slate-900/80 border border-slate-800 backdrop-blur-md rounded-2xl p-3 min-w-[180px] md:min-w-[220px] pointer-events-auto">
+                    <div class="flex justify-between items-center mb-1">
+                        <span id="hudPlayerName" class="font-bold text-xs md:text-sm text-slate-200 truncate max-w-[100px]">헌터</span>
+                        <span id="hudPlayerLevel" class="text-[10px] md:text-xs font-mono font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Lv.1</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3 md:h-3.5 rounded-full overflow-hidden border border-slate-800 relative mb-1">
+                        <div id="hpBarFill" class="bg-gradient-to-r from-red-600 to-amber-500 h-full w-full transition-all duration-200"></div>
+                        <span id="hpText" class="absolute inset-0 flex items-center justify-center text-[9px] md:text-[10px] font-bold text-white drop-shadow">150 / 150</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden relative">
+                        <div id="expBarFill" class="bg-indigo-500 h-full w-0 transition-all duration-200"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] md:text-[11px] text-slate-400 mt-1.5 font-mono">
+                        <span><i class="fa-solid fa-coins text-amber-400"></i> <span id="goldCounter">0</span></span>
+                        <span>웨이브 <span id="waveCounter" class="text-amber-400 font-bold">1/5</span></span>
+                    </div>
+                </div>
+
+                <!-- BOSS HP BAR -->
+                <div id="bossHpContainer" class="hidden flex-1 max-w-md mx-2 bg-slate-900/90 border border-red-500/40 backdrop-blur-md rounded-2xl p-2.5 text-center pointer-events-auto">
+                    <div class="flex justify-between items-center mb-1 px-1">
+                        <span id="bossName" class="font-black text-xs md:text-sm text-red-400 uppercase tracking-wide">드래곤 로드</span>
+                        <span id="bossHpPercent" class="text-[10px] md:text-xs font-mono font-bold text-red-300">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden border border-red-900/50 relative">
+                        <div id="bossHpFill" class="bg-gradient-to-r from-red-700 via-amber-600 to-red-500 h-full w-full transition-all duration-200"></div>
+                    </div>
+                    <!-- Boss Skill Warning Banner -->
+                    <div id="bossTelegraphNotice" class="hidden text-[10px] md:text-xs font-bold text-amber-300 animate-pulse mt-1">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> <span id="bossTelegraphText">경고! 보스 스킬 발동 준비 중!</span>
+                    </div>
+                </div>
+
+                <div id="teammatesHud" class="bg-slate-900/80 border border-slate-800 backdrop-blur-md rounded-2xl p-2.5 min-w-[140px] md:min-w-[160px] space-y-1.5 pointer-events-auto">
+                    <div class="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase border-b border-slate-800 pb-1">파티 상태</div>
+                    <div id="teammatesList" class="space-y-1 text-xs">
+                        <span class="text-slate-500 text-[10px] md:text-[11px] italic">솔로 모드 실행 중</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOUCH CONTROLS -->
+            <div class="flex justify-between items-end w-full pb-1 md:pb-2 pointer-events-auto">
+                <div id="joystickZone" class="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-900/40 border-2 border-slate-700/50 backdrop-blur-sm touch-action-none flex items-center justify-center">
+                    <div id="joystickBase" class="w-full h-full rounded-full relative flex items-center justify-center">
+                        <div id="joystickStick" class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-indigo-600 to-amber-500 border-2 border-amber-300 shadow-xl absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 transition-transform duration-75"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 md:gap-3">
+                    <button id="btnAttack" class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-tr from-red-600 to-amber-500 border-2 border-amber-300 text-white flex flex-col items-center justify-center shadow-lg active:scale-90 transition transform">
+                        <i class="fa-solid fa-sword text-lg md:text-2xl"></i>
+                        <span class="text-[8px] md:text-[9px] font-bold mt-0.5">공격 [J]</span>
+                    </button>
+
+                    <div class="flex flex-col gap-2">
+                        <button id="btnDash" class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-800 border border-slate-600 text-blue-400 flex flex-col items-center justify-center shadow-md active:scale-90 transition relative">
+                            <i class="fa-solid fa-person-running text-base md:text-lg"></i>
+                            <span class="text-[7px] md:text-[8px] font-bold mt-0.5">대시 [K]</span>
+                            <div id="dashCooldownOverlay" class="hidden absolute inset-0 bg-slate-950/80 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-300">0s</div>
+                        </button>
+
+                        <button id="btnSkill" class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-amber-600/80 border border-amber-400 text-amber-200 flex flex-col items-center justify-center shadow-md active:scale-90 transition relative">
+                            <i class="fa-solid fa-wand-magic-sparkles text-base md:text-lg"></i>
+                            <span class="text-[7px] md:text-[8px] font-bold mt-0.5">특수 [L]</span>
+                            <div id="skillCooldownOverlay" class="hidden absolute inset-0 bg-slate-950/80 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-300">0s</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME OVER / CLEAR MODAL -->
+        <div id="modalOverlay" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div id="gameOverPanel" class="hidden max-w-md w-full bg-slate-900 border border-red-500/30 rounded-3xl p-6 text-center space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & PRESETS ---
+        const WEAPON_PRESETS = {
+            knight: [
+                { id: 'katana', name: '카타나', desc: '빠르고 멸망적인 슬래시', iconHtml: '<i class="fa-solid fa-khanda"></i>', dmgMul: 1.0, rangeMul: 1.15 },
+                { id: 'mace', name: '메이스', desc: '묵직하고 파괴적인 내리치기', iconHtml: '<i class="fa-solid fa-hammer"></i>', dmgMul: 1.4, rangeMul: 1.0 },
+                { id: 'halberd', name: '할버드', desc: '긴 사거리의 회전 난무', iconHtml: '<i class="fa-solid fa-scroll"></i>', dmgMul: 1.2, rangeMul: 1.5 }
+            ],
+            mage: [
+                { id: 'wand', name: '지팡이', desc: '빠른 구체 마탄 발사', iconHtml: '<i class="fa-solid fa-wand-magic"></i>', dmgMul: 1.0, rangeMul: 1.1 },
+                { id: 'staff', name: '스태프', desc: '폭발하는 거대 파이어볼', iconHtml: '<i class="fa-solid fa-wand-magic-sparkles"></i>', dmgMul: 1.5, rangeMul: 1.0 },
+                { id: 'orb', name: '수정구', desc: '유도형 라이트닝 번개', iconHtml: '<i class="fa-solid fa-circle-dot"></i>', dmgMul: 0.85, rangeMul: 0.9, doubleShot: true }
+            ],
+            ranger: [
+                { id: 'bow', name: '활', desc: '관통하는 화살 발사', iconHtml: '<i class="fa-solid fa-crosshairs"></i>', dmgMul: 1.1, rangeMul: 1.3 },
+                { id: 'gun', name: '총', desc: '고속 직진 연사 탄환', iconHtml: '<i class="fa-solid fa-gun"></i>', dmgMul: 1.25, rangeMul: 1.1 },
+                { id: 'daggers', name: '투척 단검', desc: '3방향 부채꼴 다중 투척', iconHtml: '<i class="fa-solid fa-burst"></i>', dmgMul: 0.75, rangeMul: 0.85, tripleShot: true }
+            ]
+        };
+
+        const CLASS_PRESETS = {
+            knight: { name: '성기사', maxHp: 200, speed: 4.8, attackDmg: 35, attackRange: 120, skillCd: 3500, color: '#f59e0b' },
+            mage: { name: '마법사', maxHp: 110, speed: 4.3, attackDmg: 45, attackRange: 240, skillCd: 3000, color: '#3b82f6' },
+            ranger: { name: '레인저', maxHp: 130, speed: 5.4, attackDmg: 28, attackRange: 300, skillCd: 2500, color: '#10b981' }
+        };
+
+        const ARMOR_COLORS = {
+            silver: { name: '실버', main: '#94a3b8', dark: '#475569', highlight: '#cbd5e1', visor: '#38bdf8' },
+            red: { name: '크림슨', main: '#ef4444', dark: '#991b1b', highlight: '#fca5a5', visor: '#fde047' },
+            blue: { name: '코발트', main: '#3b82f6', dark: '#1e3a8a', highlight: '#93c5fd', visor: '#60a5fa' },
+            black: { name: '흑철', main: '#334155', dark: '#0f172a', highlight: '#64748b', visor: '#a855f7' },
+            gold: { name: '황금', main: '#f59e0b', dark: '#78350f', highlight: '#fde047', visor: '#ffffff' }
+        };
+
+        // 5 BOSS WAVES CONFIGURATION
+        const BOSS_PRESETS = [
+            {
+                wave: 1,
+                name: '심연의 리치',
+                title: '사령 마법사',
+                maxHp: 800,
+                radius: 38,
+                speed: 1.8,
+                color: '#8b5cf6',
+                skills: [
+                    { name: '해골 탄환 폭격', type: 'ring_bullets', cd: 4000 },
+                    { name: '저주받은 사령 진원', type: 'aoe_zone', cd: 7000 }
+                ]
+            },
+            {
+                wave: 2,
+                name: '독성 스파이더 퀸',
+                title: '심해의 여왕 Spider',
+                maxHp: 1400,
+                radius: 44,
+                speed: 2.2,
+                color: '#10b981',
+                skills: [
+                    { name: '맹독 분사 조준 사격', type: 'target_shotgun', cd: 3500 },
+                    { name: '거미줄 속박 웹', type: 'web_trap', cd: 6000 }
+                ]
+            },
+            {
+                wave: 3,
+                name: '지옥불 칼날 골렘',
+                title: '화염의 거인',
+                maxHp: 2200,
+                radius: 52,
+                speed: 1.5,
+                color: '#f97316',
+                skills: [
+                    { name: '지옥불 돌진 폭격', type: 'dash_slam', cd: 5000 },
+                    { name: '용암 회오리 방출', type: 'fire_spiral', cd: 6500 }
+                ]
+            },
+            {
+                wave: 4,
+                name: '그림자 처형자',
+                title: '암흑 사신',
+                maxHp: 3200,
+                radius: 40,
+                speed: 3.2,
+                color: '#e11d48',
+                skills: [
+                    { name: '그림자 순간이동 습격', type: 'teleport_strike', cd: 4500 },
+                    { name: '암흑 십자 검풍', type: 'cross_slash', cd: 5500 }
+                ]
+            },
+            {
+                wave: 5,
+                name: '파멸의 드래곤 로드',
+                title: '최종 멸망의 용',
+                maxHp: 5000,
+                radius: 65,
+                speed: 1.9,
+                color: '#dc2626',
+                skills: [
+                    { name: '드래곤 브레스 전방 사격', type: 'breath_stream', cd: 4000 },
+                    { name: '종말의 운석 낙하', type: 'meteor_shower', cd: 6000 }
+                ]
+            }
+        ];
+
+        // --- GLOBAL VARIABLES ---
+        let selectedClass = 'knight';
+        let selectedWeapon = 'katana';
+        let selectedArmorColor = 'silver';
+        let isMultiplayer = false;
+        let isGameRunning = false;
+        let animationFrameId = null;
+        let wave = 1;
+        let gold = 0;
+
+        let monsters = [];
+        let projectiles = [];
+        let particles = [];
+        let floatingTexts = [];
+        let aoeZones = [];
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+
+        function resizeCanvas() {
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Audio System
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'slash') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
+                } else if (type === 'magic') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                } else if (type === 'shoot') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                } else if (type === 'hit') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                } else if (type === 'boss_attack') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(100, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.4);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now); osc.stop(now + 0.4);
+                } else if (type === 'levelup') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.setValueAtTime(523, now + 0.08);
+                    osc.frequency.setValueAtTime(659, now + 0.16);
+                    osc.frequency.setValueAtTime(783, now + 0.24);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now); osc.stop(now + 0.35);
+                }
+            } catch (e) {}
+        }
+
+        // Local Player Object
+        let player = {
+            id: 'local',
+            x: 0,
+            y: 0,
+            radius: 20,
+            classKey: 'knight',
+            weaponKey: 'katana',
+            armorColorKey: 'silver',
+            hp: 200,
+            maxHp: 200,
+            level: 1,
+            exp: 0,
+            nextExp: 100,
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            dashCooldown: 0,
+            skillCooldown: 0,
+            isDashing: false,
+            dashTimer: 0,
+            lastAttackTime: 0,
+            attackSwingTimer: 0
+        };
+
+        const keys = {};
+        window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+        window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+        let joystickState = { active: false, dx: 0, dy: 0 };
+
+        // --- DRAWING FUNCTIONS ---
+        function drawKnightWeapon(ctx, weaponKey, radius, attackAnim) {
+            const swingOffset = attackAnim > 0 ? (10 - attackAnim) * 0.2 : 0;
+            ctx.save();
+            ctx.rotate(swingOffset);
+
+            if (weaponKey === 'mace') {
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(radius * 0.5, radius * 0.2, 22, 5);
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(radius * 0.5 + 26, radius * 0.25, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#f87171';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            } else if (weaponKey === 'halberd') {
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(radius * 0.4, radius * 0.2, 45, 5);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath();
+                ctx.moveTo(radius * 0.4 + 45, radius * 0.15);
+                ctx.lineTo(radius * 0.4 + 62, radius * 0.25);
+                ctx.lineTo(radius * 0.4 + 45, radius * 0.35);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Katana
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(radius * 0.5, radius * 0.2, 9, 4);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(radius * 0.5 + 9, radius * 0.15, 3, 9);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(radius * 0.5 + 12, radius * 0.2);
+                ctx.lineTo(radius * 0.5 + 42, radius * 0.15);
+                ctx.lineTo(radius * 0.5 + 46, radius * 0.25);
+                ctx.lineTo(radius * 0.5 + 12, radius * 0.3);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawMageWeapon(ctx, weaponKey, radius, attackAnim) {
+            ctx.save();
+            if (weaponKey === 'orb') {
+                ctx.fillStyle = '#a855f7';
+                ctx.shadowColor = '#c084fc';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(radius * 0.8, radius * 0.4, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (weaponKey === 'staff') {
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(radius * 0.3, radius * 0.2, 35, 4);
+                ctx.fillStyle = '#ef4444';
+                ctx.shadowColor = '#f87171';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(radius * 0.3 + 38, radius * 0.25, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                // Wand
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(radius * 0.4, radius * 0.2, 22, 3);
+                ctx.fillStyle = '#38bdf8';
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(radius * 0.4 + 24, radius * 0.23, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            ctx.restore();
+        }
+
+        function drawRangerWeapon(ctx, weaponKey, radius, attackAnim) {
+            ctx.save();
+            if (weaponKey === 'gun') {
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(radius * 0.5, radius * 0.1, 20, 6);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(radius * 0.5 + 4, radius * 0.25, 5, 8);
+            } else if (weaponKey === 'daggers') {
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.moveTo(radius * 0.6, radius * 0.1);
+                ctx.lineTo(radius * 0.6 + 18, radius * 0.2);
+                ctx.lineTo(radius * 0.6, radius * 0.3);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Bow
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(radius * 0.6, radius * 0.25, 16, -Math.PI * 0.4, Math.PI * 0.4);
+                ctx.stroke();
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(radius * 0.6 + 10, radius * 0.25 - 12);
+                ctx.lineTo(radius * 0.6 + 10, radius * 0.25 + 12);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function drawPlayerCharacter(ctx, p) {
+            const colorScheme = ARMOR_COLORS[p.armorColorKey] || ARMOR_COLORS.silver;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+
+            if (p.isDashing) {
+                ctx.fillStyle = colorScheme.highlight;
+                ctx.globalAlpha = 0.35;
+                ctx.beginPath();
+                ctx.arc(-Math.cos(p.angle) * 12, -Math.sin(p.angle) * 12, p.radius + 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+
+            ctx.rotate(p.angle);
+
+            // Body
+            ctx.fillStyle = colorScheme.main;
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = colorScheme.dark;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Visor / Eyes
+            ctx.fillStyle = colorScheme.visor;
+            ctx.shadowColor = colorScheme.visor;
+            ctx.shadowBlur = 8;
+            ctx.fillRect(4, -p.radius * 0.25, 4, p.radius * 0.5);
+            ctx.shadowBlur = 0;
+
+            // Weapon
+            if (p.classKey === 'knight') drawKnightWeapon(ctx, p.weaponKey, p.radius, p.attackSwingTimer);
+            else if (p.classKey === 'mage') drawMageWeapon(ctx, p.weaponKey, p.radius, p.attackSwingTimer);
+            else if (p.classKey === 'ranger') drawRangerWeapon(ctx, p.weaponKey, p.radius, p.attackSwingTimer);
+
+            ctx.restore();
+        }
+
+        // BOSS DRAWING WITH UNIQUE FEARFUL APPEARANCES
+        function drawBoss(ctx, m) {
+            ctx.save();
+            ctx.translate(m.x, m.y);
+
+            // Aura Effect
+            const auraGrad = ctx.createRadialGradient(0, 0, m.radius * 0.5, 0, 0, m.radius * 1.5);
+            auraGrad.addColorStop(0, m.color + '66');
+            auraGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = auraGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, m.radius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (m.wave === 1) {
+                // Lich: Floating skull priest with glowing purple horns
+                ctx.fillStyle = '#2e1065';
+                ctx.beginPath();
+                ctx.arc(0, 0, m.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f8fafc'; // Skull face
+                ctx.beginPath();
+                ctx.arc(0, -2, m.radius * 0.65, 0, Math.PI * 2);
+                ctx.fill();
+                // Glowing eyes
+                ctx.fillStyle = '#c084fc';
+                ctx.shadowColor = '#c084fc'; ctx.shadowBlur = 10;
+                ctx.beginPath(); ctx.arc(-8, -6, 5, 0, Math.PI * 2); ctx.arc(8, -6, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (m.wave === 2) {
+                // Spider Queen: Poison spider body with multiple glowing green eyes & fangs
+                ctx.fillStyle = '#064e3b';
+                ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI * 2); ctx.fill();
+                // Spider Legs
+                ctx.strokeStyle = '#10b981'; ctx.lineWidth = 4;
+                for (let i = -3; i <= 3; i++) {
+                    if (i === 0) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(0, i * 6);
+                    ctx.lineTo(Math.sign(i) * (m.radius + 20), i * 12);
+                    ctx.stroke();
+                }
+                // Multiple red/green eyes
+                ctx.fillStyle = '#34d399';
+                ctx.beginPath();
+                ctx.arc(-10, -10, 4, 0, Math.PI*2); ctx.arc(10, -10, 4, 0, Math.PI*2);
+                ctx.arc(-4, -16, 3, 0, Math.PI*2); ctx.arc(4, -16, 3, 0, Math.PI*2);
+                ctx.fill();
+            } else if (m.wave === 3) {
+                // Flame Golem: Jagged molten rock beast
+                ctx.fillStyle = '#7c2d12';
+                ctx.beginPath();
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+                    const r = m.radius + (Math.sin(a * 3 + Date.now() * 0.005) * 6);
+                    const gx = Math.cos(a) * r;
+                    const gy = Math.sin(a) * r;
+                    if (a === 0) ctx.moveTo(gx, gy); else ctx.lineTo(gx, gy);
+                }
+                ctx.closePath(); ctx.fill();
+                // Lava cracks
+                ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3;
+                ctx.stroke();
+            } else if (m.wave === 4) {
+                // Shadow Executioner: Cloaked blade demon
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 3; ctx.stroke();
+                // Glowing Scythe / Blade Hands
+                ctx.fillStyle = '#f43f5e';
+                ctx.shadowColor = '#f43f5e'; ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.arc(0, -m.radius * 0.2, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (m.wave === 5) {
+                // Dragon Lord: Huge winged dragon head with glowing fiery breath jaws
+                ctx.fillStyle = '#7f1d1d';
+                ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI * 2); ctx.fill();
+                // Horns
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(-m.radius * 0.5, -m.radius * 0.7);
+                ctx.lineTo(-m.radius * 0.9, -m.radius * 1.3);
+                ctx.lineTo(-m.radius * 0.2, -m.radius * 0.8);
+                ctx.moveTo(m.radius * 0.5, -m.radius * 0.7);
+                ctx.lineTo(m.radius * 0.9, -m.radius * 1.3);
+                ctx.lineTo(m.radius * 0.2, -m.radius * 0.8);
+                ctx.fill();
+                // Fiery Jaws
+                ctx.fillStyle = '#ef4444';
+                ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(0, m.radius * 0.3, m.radius * 0.4, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Boss HP Bar Above Head
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(-m.radius, -m.radius - 16, m.radius * 2, 8);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-m.radius, -m.radius - 16, (m.radius * 2) * (m.hp / m.maxHp), 8);
+
+            ctx.restore();
+        }
+
+        // UI Helpers
+        function selectClass(c) {
+            selectedClass = c;
+            const presetKeys = Object.keys(WEAPON_PRESETS[c]);
+            selectedWeapon = WEAPON_PRESETS[c][0].id;
+
+            ['knight', 'mage', 'ranger'].forEach(k => {
+                const btn = document.getElementById(`classBtn-${k}`);
+                if (k === c) {
+                    btn.className = "class-card bg-amber-500/20 border-2 border-amber-500 rounded-xl p-2.5 flex flex-col items-center transition-all hover:scale-105";
+                } else {
+                    btn.className = "class-card bg-slate-800/50 border-2 border-transparent rounded-xl p-2.5 flex flex-col items-center transition-all hover:scale-105";
+                }
+            });
+            renderWeaponSelector();
+        }
+
+        function renderWeaponSelector() {
+            const container = document.getElementById('weaponSelectorContainer');
+            if (!container) return;
+            const list = WEAPON_PRESETS[selectedClass] || [];
+            container.innerHTML = list.map(w => `
+                <button onclick="selectedWeapon='${w.id}'; renderWeaponSelector();" class="p-2 rounded-xl border flex flex-col items-center transition ${selectedWeapon === w.id ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-800/40 border-slate-700/50 text-slate-400'}">
+                    <div class="text-base mb-0.5">${w.iconHtml}</div>
+                    <span class="text-[11px] font-bold">${w.name}</span>
+                    <span class="text-[8px] text-slate-400 mt-0.5">${w.desc}</span>
+                </button>
+            `).join('');
+        }
+
+        function renderArmorColors() {
+            const container = document.getElementById('armorColorContainer');
+            if (!container) return;
+            container.innerHTML = Object.keys(ARMOR_COLORS).map(k => `
+                <button onclick="selectedArmorColor='${k}'; renderArmorColors();" class="p-2 rounded-xl border flex items-center justify-center gap-1.5 transition ${selectedArmorColor === k ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-800/40 border-slate-700 text-slate-400'}">
+                    <div class="w-3.5 h-3.5 rounded-full" style="background-color: ${ARMOR_COLORS[k].main}"></div>
+                    <span class="text-xs font-bold">${ARMOR_COLORS[k].name}</span>
+                </button>
+            `).join('');
+        }
+
+        function openMultiplayLobby() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('multiLobby').classList.remove('hidden');
+            renderArmorColors();
+        }
+
+        function closeMultiplayLobby() {
+            document.getElementById('multiLobby').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+
+        function createMultiRoom() {
+            const code = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('lobbyInputArea').classList.add('hidden');
+            document.getElementById('roomWaitingArea').classList.remove('hidden');
+            document.getElementById('displayRoomCode').innerText = code;
+            document.getElementById('playerListContainer').innerHTML = `
+                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-indigo-500/30">
+                    <span class="text-xs font-bold text-amber-300">${document.getElementById('playerNameInput').value || '방장'} (나)</span>
+                    <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full">방장</span>
+                </div>
+            `;
+        }
+
+        function joinMultiRoom() {
+            const input = document.getElementById('roomCodeInput').value;
+            if (!input || input.length < 4) return alert('올바른 4자리 방 코드를 입력하세요.');
+            document.getElementById('lobbyInputArea').classList.add('hidden');
+            document.getElementById('roomWaitingArea').classList.remove('hidden');
+            document.getElementById('displayRoomCode').innerText = input;
+            document.getElementById('playerListContainer').innerHTML = `
+                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-slate-800">
+                    <span class="text-xs font-bold text-slate-300">방장</span>
+                </div>
+                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-indigo-500/30">
+                    <span class="text-xs font-bold text-amber-300">${document.getElementById('playerNameInput').value || '헌터'} (나)</span>
+                    <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">참가자</span>
+                </div>
+            `;
+            document.getElementById('playerCount').innerText = "2";
+        }
+
+        function copyRoomCode() {
+            const code = document.getElementById('displayRoomCode').innerText;
+            navigator.clipboard.writeText(code);
+            alert('방 코드가 복사되었습니다: ' + code);
+        }
+
+        function leaveRoom() {
+            document.getElementById('roomWaitingArea').classList.add('hidden');
+            document.getElementById('lobbyInputArea').classList.remove('hidden');
+        }
+
+        function startMultiGame() {
+            isMultiplayer = true;
+            initGame();
+        }
+
+        function startSoloGame() {
+            isMultiplayer = false;
+            initGame();
+        }
+
+        // --- GAME CORE LOGIC ---
+        function initGame() {
+            document.getElementById('uiOverlay').classList.add('hidden');
+            document.getElementById('hudOverlay').classList.remove('hidden');
+
+            const pClass = CLASS_PRESETS[selectedClass];
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.classKey = selectedClass;
+            player.weaponKey = selectedWeapon;
+            player.armorColorKey = selectedArmorColor;
+            player.maxHp = pClass.maxHp;
+            player.hp = pClass.maxHp;
+            player.level = 1;
+            player.exp = 0;
+            player.nextExp = 100;
+            player.dashCooldown = 0;
+            player.skillCooldown = 0;
+
+            wave = 1;
+            gold = 0;
+            monsters = [];
+            projectiles = [];
+            particles = [];
+            floatingTexts = [];
+            aoeZones = [];
+
+            updateHud();
+            spawnBossWave(wave);
+
+            isGameRunning = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function spawnBossWave(w) {
+            document.getElementById('waveCounter').innerText = `${w}/5`;
+            const bossData = BOSS_PRESETS[w - 1];
+            if (!bossData) return triggerVictory();
+
+            // Spawn Boss at center-top
+            monsters = [{
+                isBoss: true,
+                wave: w,
+                name: bossData.name,
+                title: bossData.title,
+                x: canvas.width / 2,
+                y: canvas.height * 0.2,
+                radius: bossData.radius,
+                hp: bossData.maxHp,
+                maxHp: bossData.maxHp,
+                speed: bossData.speed,
+                color: bossData.color,
+                skills: bossData.skills,
+                lastSkillTime: Date.now() + 2000
+            }];
+
+            // Show Boss HUD
+            const bContainer = document.getElementById('bossHpContainer');
+            bContainer.classList.remove('hidden');
+            document.getElementById('bossName').innerText = `${bossData.name} (${bossData.title})`;
+            updateBossHud();
+        }
+
+        function updateBossHud() {
+            const boss = monsters.find(m => m.isBoss);
+            if (!boss) return;
+            const pct = Math.max(0, Math.floor((boss.hp / boss.maxHp) * 100));
+            document.getElementById('bossHpPercent').innerText = `${pct}%`;
+            document.getElementById('bossHpFill').style.width = `${pct}%`;
+        }
+
+        function updateHud() {
+            document.getElementById('hudPlayerName').innerText = document.getElementById('playerNameInput').value || '헌터';
+            document.getElementById('hudPlayerLevel').innerText = `Lv.${player.level}`;
+            const hpPct = Math.max(0, (player.hp / player.maxHp) * 100);
+            document.getElementById('hpBarFill').style.width = `${hpPct}%`;
+            document.getElementById('hpText').innerText = `${Math.ceil(player.hp)} / ${player.maxHp}`;
+            document.getElementById('expBarFill').style.width = `${(player.exp / player.nextExp) * 100}%`;
+            document.getElementById('goldCounter').innerText = gold;
+        }
+
+        // ATTACK & SKILL LOGIC
+        function executeAttack() {
+            const now = Date.now();
+            if (now - player.lastAttackTime < 250) return;
+            player.lastAttackTime = now;
+            player.attackSwingTimer = 10;
+
+            const pClass = CLASS_PRESETS[player.classKey];
+            const dmg = pClass.attackDmg;
+
+            if (player.classKey === 'knight') {
+                playSound('slash');
+                // Melee Cleave
+                const reach = pClass.attackRange;
+                monsters.forEach(m => {
+                    const dist = Math.hypot(m.x - player.x, m.y - player.y);
+                    if (dist < reach + m.radius) {
+                        const angleToM = Math.atan2(m.y - player.y, m.x - player.x);
+                        let diff = Math.abs(angleToM - player.angle);
+                        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                        if (diff < Math.PI * 0.55) {
+                            damageMonster(m, dmg, true);
+                        }
+                    }
+                });
+                // Slash Effect Particles
+                for (let i = 0; i < 8; i++) {
+                    particles.push({
+                        x: player.x + Math.cos(player.angle) * 30,
+                        y: player.y + Math.sin(player.angle) * 30,
+                        vx: Math.cos(player.angle + (Math.random() - 0.5)) * 6,
+                        vy: Math.sin(player.angle + (Math.random() - 0.5)) * 6,
+                        life: 12, maxLife: 12, color: '#f59e0b', size: 4
+                    });
+                }
+            } else if (player.classKey === 'mage') {
+                playSound('magic');
+                // Magic Projectile
+                projectiles.push({
+                    x: player.x + Math.cos(player.angle) * 20,
+                    y: player.y + Math.sin(player.angle) * 20,
+                    vx: Math.cos(player.angle) * 11,
+                    vy: Math.sin(player.angle) * 11,
+                    radius: 7, dmg: dmg, isPlayer: true, color: '#38bdf8', type: 'fireball'
+                });
+            } else if (player.classKey === 'ranger') {
+                playSound('shoot');
+                // Ranged Arrow / Bullet
+                projectiles.push({
+                    x: player.x + Math.cos(player.angle) * 20,
+                    y: player.y + Math.sin(player.angle) * 20,
+                    vx: Math.cos(player.angle) * 15,
+                    vy: Math.sin(player.angle) * 15,
+                    radius: 4, dmg: dmg, isPlayer: true, color: '#10b981', type: 'arrow'
+                });
+            }
+        }
+
+        function executeSpecialSkill() {
+            if (player.skillCooldown > 0) return;
+            player.skillCooldown = CLASS_PRESETS[player.classKey].skillCd;
+
+            if (player.classKey === 'knight') {
+                playSound('slash');
+                // Whirlwind Slash: 360 degree explosion damage
+                monsters.forEach(m => {
+                    const dist = Math.hypot(m.x - player.x, m.y - player.y);
+                    if (dist < 180 + m.radius) damageMonster(m, 120, true);
+                });
+                for (let a = 0; a < Math.PI * 2; a += 0.2) {
+                    particles.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(a) * 10, vy: Math.sin(a) * 10,
+                        life: 18, maxLife: 18, color: '#f59e0b', size: 6
+                    });
+                }
+            } else if (player.classKey === 'mage') {
+                playSound('magic');
+                // Mega Arcane Explosion
+                aoeZones.push({
+                    x: player.x, y: player.y, radius: 140, duration: 30, color: '#a855f7', dmg: 160
+                });
+            } else if (player.classKey === 'ranger') {
+                playSound('shoot');
+                // Fan Scatter Shot (5 Arrows)
+                for (let a = -0.4; a <= 0.4; a += 0.2) {
+                    projectiles.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(player.angle + a) * 16,
+                        vy: Math.sin(player.angle + a) * 16,
+                        radius: 5, dmg: 70, isPlayer: true, color: '#34d399', type: 'arrow'
+                    });
+                }
+            }
+        }
+
+        function executeDash() {
+            if (player.dashCooldown > 0) return;
+            player.isDashing = true;
+            player.dashTimer = 12;
+            player.dashCooldown = 1500;
+        }
+
+        function damageMonster(m, dmg, isCrit) {
+            m.hp -= dmg;
+            playSound('hit');
+            floatingTexts.push({
+                x: m.x + (Math.random() - 0.5) * 20,
+                y: m.y - 20,
+                text: `${Math.floor(dmg)}`,
+                color: isCrit ? '#fde047' : '#ffffff',
+                life: 30
+            });
+            if (m.isBoss) updateBossHud();
+
+            if (m.hp <= 0) {
+                // Boss Defeated
+                gold += 100 * wave;
+                player.exp += 150 * wave;
+                if (player.exp >= player.nextExp) {
+                    player.level++;
+                    player.exp -= player.nextExp;
+                    player.nextExp = Math.floor(player.nextExp * 1.5);
+                    player.maxHp += 30;
+                    player.hp = player.maxHp;
+                    playSound('levelup');
+                }
+                updateHud();
+
+                if (wave < 5) {
+                    wave++;
+                    setTimeout(() => spawnBossWave(wave), 1500);
+                } else {
+                    triggerVictory();
+                }
+            }
+        }
+
+        function damagePlayer(dmg) {
+            if (player.isDashing) return; // Invulnerable while dashing
+            player.hp -= dmg;
+            playSound('hit');
+            updateHud();
+            if (player.hp <= 0) triggerGameOver();
+        }
+
+        function triggerGameOver() {
+            isGameRunning = false;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            const panel = document.getElementById('gameOverPanel');
+            panel.classList.remove('hidden');
+            panel.innerHTML = `
+                <h2 class="text-3xl font-black font-orbitron text-red-500">GAME OVER</h2>
+                <p class="text-sm text-slate-300">보스의 무자비한 스킬 공격에 패배하였습니다.</p>
+                <button onclick="location.reload()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition">
+                    다시 도전하기
+                </button>
+            `;
+        }
+
+        function triggerVictory() {
+            isGameRunning = false;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            const panel = document.getElementById('gameOverPanel');
+            panel.classList.remove('hidden');
+            panel.innerHTML = `
+                <h2 class="text-3xl font-black font-orbitron text-amber-400">ALL WAVES CLEARED!</h2>
+                <p class="text-sm text-slate-300">축하합니다! 5대 보스를 모두 물리치고 아레나의 최고 헌터가 되었습니다!</p>
+                <button onclick="location.reload()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition">
+                    메인으로 돌아가기
+                </button>
+            `;
+        }
+
+        // BOSS SKILL AI LOGIC
+        function updateBossAI(m) {
+            const now = Date.now();
+            if (now > m.lastSkillTime) {
+                m.lastSkillTime = now + 4500;
+                const skill = m.skills[Math.floor(Math.random() * m.skills.length)];
+                playSound('boss_attack');
+
+                // Telegraph Notice
+                const notice = document.getElementById('bossTelegraphNotice');
+                const noticeText = document.getElementById('bossTelegraphText');
+                notice.classList.remove('hidden');
+                noticeText.innerText = `[${m.name}] ${skill.name} 스킬 발동!`;
+                setTimeout(() => notice.classList.add('hidden'), 2000);
+
+                // Skill Execution
+                if (skill.type === 'ring_bullets') {
+                    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+                        projectiles.push({
+                            x: m.x, y: m.y, vx: Math.cos(a) * 5, vy: Math.sin(a) * 5,
+                            radius: 8, dmg: 25, isPlayer: false, color: '#c084fc'
+                        });
+                    }
+                } else if (skill.type === 'target_shotgun') {
+                    const angle = Math.atan2(player.y - m.y, player.x - m.x);
+                    for (let a = -0.3; a <= 0.3; a += 0.15) {
+                        projectiles.push({
+                            x: m.x, y: m.y, vx: Math.cos(angle + a) * 8, vy: Math.sin(angle + a) * 8,
+                            radius: 9, dmg: 30, isPlayer: false, color: '#10b981'
+                        });
+                    }
+                } else if (skill.type === 'dash_slam') {
+                    const angle = Math.atan2(player.y - m.y, player.x - m.x);
+                    m.x += Math.cos(angle) * 120;
+                    m.y += Math.sin(angle) * 120;
+                    aoeZones.push({ x: m.x, y: m.y, radius: 100, duration: 25, color: '#f97316', dmg: 40 });
+                } else if (skill.type === 'breath_stream') {
+                    const angle = Math.atan2(player.y - m.y, player.x - m.x);
+                    for (let i = 1; i <= 5; i++) {
+                        projectiles.push({
+                            x: m.x + Math.cos(angle) * (i * 30),
+                            y: m.y + Math.sin(angle) * (i * 30),
+                            vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10,
+                            radius: 12, dmg: 35, isPlayer: false, color: '#ef4444'
+                        });
+                    }
+                }
+            }
+        }
+
+        // --- GAME LOOP ---
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            // Player Movement
+            const pClass = CLASS_PRESETS[player.classKey];
+            let moveX = 0, moveY = 0;
+            if (keys['w'] || keys['arrowup']) moveY -= 1;
+            if (keys['s'] || keys['arrowdown']) moveY += 1;
+            if (keys['a'] || keys['arrowleft']) moveX -= 1;
+            if (keys['d'] || keys['arrowright']) moveX += 1;
+
+            if (joystickState.active) {
+                moveX = joystickState.dx;
+                moveY = joystickState.dy;
+            }
+
+            const speed = player.isDashing ? pClass.speed * 2.2 : pClass.speed;
+            if (moveX !== 0 || moveY !== 0) {
+                const len = Math.hypot(moveX, moveY);
+                player.x += (moveX / len) * speed;
+                player.y += (moveY / len) * speed;
+                player.angle = Math.atan2(moveY, moveX);
+            }
+
+            // Keep inside bounds
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+            // Timers & Cooldowns
+            if (player.dashTimer > 0) player.dashTimer--; else player.isDashing = false;
+            if (player.dashCooldown > 0) player.dashCooldown -= 16;
+            if (player.skillCooldown > 0) player.skillCooldown -= 16;
+            if (player.attackSwingTimer > 0) player.attackSwingTimer--;
+
+            // Handle Keys
+            if (keys['j']) executeAttack();
+            if (keys['k']) executeDash();
+            if (keys['l']) executeSpecialSkill();
+
+            // RENDER CANVAS
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Arena Grid Overlay
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Update & Draw Bosses
+            monsters.forEach(m => {
+                // Move towards player
+                const angle = Math.atan2(player.y - m.y, player.x - m.x);
+                m.x += Math.cos(angle) * m.speed;
+                m.y += Math.sin(angle) * m.speed;
+
+                updateBossAI(m);
+                drawBoss(ctx, m);
+
+                // Body collision with player
+                const dist = Math.hypot(player.x - m.x, player.y - m.y);
+                if (dist < player.radius + m.radius) {
+                    damagePlayer(1);
+                }
+            });
+
+            // Update & Draw Projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const pr = projectiles[i];
+                pr.x += pr.vx;
+                pr.y += pr.vy;
+
+                ctx.fillStyle = pr.color;
+                ctx.shadowColor = pr.color; ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(pr.x, pr.y, pr.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Hit detection
+                if (pr.isPlayer) {
+                    monsters.forEach(m => {
+                        if (Math.hypot(m.x - pr.x, m.y - pr.y) < m.radius + pr.radius) {
+                            damageMonster(m, pr.dmg, false);
+                            projectiles.splice(i, 1);
+                        }
+                    });
+                } else {
+                    if (Math.hypot(player.x - pr.x, player.y - pr.y) < player.radius + pr.radius) {
+                        damagePlayer(pr.dmg);
+                        projectiles.splice(i, 1);
+                    }
+                }
+
+                // Out of bounds
+                if (pr.x < 0 || pr.x > canvas.width || pr.y < 0 || pr.y > canvas.height) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            // Draw AOE Zones
+            for (let i = aoeZones.length - 1; i >= 0; i--) {
+                const zone = aoeZones[i];
+                ctx.fillStyle = zone.color + '44';
+                ctx.beginPath(); ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = zone.color; ctx.lineWidth = 2; ctx.stroke();
+
+                if (Math.hypot(player.x - zone.x, player.y - zone.y) < zone.radius + player.radius) {
+                    damagePlayer(0.8);
+                }
+
+                zone.duration--;
+                if (zone.duration <= 0) aoeZones.splice(i, 1);
+            }
+
+            // Draw Player
+            drawPlayerCharacter(ctx, player);
+
+            // Floating Damage Text
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y -= 0.8;
+                ft.life--;
+                ctx.font = 'bold 14px Orbitron';
+                ctx.fillStyle = ft.color;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // TOUCH & BUTTON CONTROLS SETUP
+        document.getElementById('btnAttack').addEventListener('click', executeAttack);
+        document.getElementById('btnDash').addEventListener('click', executeDash);
+        document.getElementById('btnSkill').addEventListener('click', executeSpecialSkill);
+
+        // Joystick Touch Control
+        const joystickZone = document.getElementById('joystickZone');
+        const joystickStick = document.getElementById('joystickStick');
+
+        function handleJoystick(e) {
+            const rect = joystickZone.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            const dist = Math.hypot(dx, dy);
+            const maxRadius = rect.width / 2 - 10;
+
+            if (dist > maxRadius) {
+                dx = (dx / dist) * maxRadius;
+                dy = (dy / dist) * maxRadius;
+            }
+
+            joystickStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            joystickState = { active: true, dx: dx / maxRadius, dy: dy / maxRadius };
+        }
+
+        function resetJoystick() {
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+            joystickState = { active: false, dx: 0, dy: 0 };
+        }
+
+        joystickZone.addEventListener('touchstart', handleJoystick);
+        joystickZone.addEventListener('touchmove', handleJoystick);
+        joystickZone.addEventListener('touchend', resetJoystick);
+        joystickZone.addEventListener('mousedown', handleJoystick);
+        window.addEventListener('mousemove', e => { if (joystickState.active) handleJoystick(e); });
+        window.addEventListener('mouseup', resetJoystick);
+
+        // Initialize UI
+        selectClass('knight');
+    </script>
+</body>
+</html>
+            ctx.rotate(angle);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(0, 3, radius * 0.95, radius * 0.75, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = colorScheme.dark;
+            ctx.beginPath();
+            ctx.arc(-2, -radius * 0.82, radius * 0.42, 0, Math.PI * 2);
+            ctx.arc(-2, radius * 0.82, radius * 0.42, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = colorScheme.main;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = colorScheme.dark;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = colorScheme.dark;
+            ctx.beginPath();
+            ctx.arc(3, 0, radius * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = colorScheme.visor;
+            ctx.shadowColor = colorScheme.visor;
+            ctx.shadowBlur = 8;
+            ctx.fillRect(4, -radius * 0.25, 3.5, radius * 0.5);
+            ctx.shadowBlur = 0;
+
+            drawKnightWeapon(ctx, weaponKey, radius, attackAnim);
+            ctx.restore();
+        }
+
+        function drawMageWeapon(ctx, weaponKey, radius, attackAnim) {
+            const swingOffset = attackAnim > 0 ? (10 - attackAnim) * 0.1 : 0;
+            ctx.save();
+            ctx.rotate(swingOffset);
+
+            if (weaponKey === 'staff') {
+                // Long Golden Staff with Fiery Crystal
+                ctx.fil
